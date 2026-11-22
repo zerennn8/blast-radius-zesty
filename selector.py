@@ -209,6 +209,26 @@ def dump(n):
     return ast.dump(n, include_attributes=False)
 
 
+class NoneCmp(ast.NodeTransformer):
+    """`x is None` and `x == None` (and `is not` / `!=`) behave the same for every
+    type sqlglot compares: no sqlglot __eq__ treats None as equal. Normalize them."""
+
+    def visit_Compare(self, n):
+        self.generic_visit(n)
+        ops = []
+        for i, op in enumerate(n.ops):
+            left = n.left if i == 0 else n.comparators[i - 1]
+            right = n.comparators[i]
+            none = any(isinstance(x, ast.Constant) and x.value is None for x in (left, right))
+            if none and isinstance(op, ast.Eq):
+                op = ast.Is()
+            elif none and isinstance(op, ast.NotEq):
+                op = ast.IsNot()
+            ops.append(op)
+        n.ops = ops
+        return n
+
+
 STMT_FIELDS = ("body", "orelse", "finalbody", "handlers")
 
 
@@ -280,6 +300,59 @@ def load_names(n):
         elif isinstance(sub, ast.Attribute):
             attrs.add(sub.attr)
     return names, attrs
+
+
+def diff_sites(a, b, out):
+    """Collect minimal old-side nodes where a and b differ."""
+    if type(a) is not type(b):
+        out.append(a)
+        return
+    if isinstance(a, ast.AST):
+        for f in a._fields:
+            va, vb = getattr(a, f, None), getattr(b, f, None)
+            if isinstance(va, list) and isinstance(vb, list):
+                if len(va) != len(vb):
+                    out.append(a)
+                    return
+                for x, y in zip(va, vb):
+                    if isinstance(x, ast.AST) or isinstance(y, ast.AST):
+                        diff_sites(x, y, out)
+                    elif x != y:
+                        out.append(a)
+                        return
+            elif isinstance(va, ast.AST) or isinstance(vb, ast.AST):
+                diff_sites(va, vb, out)
+            elif va != vb or type(va) is not type(vb):
+                out.append(a)
+                return
+    elif a != b:
+        out.append(a)
+
+
+def lambda_only_sites(a, b):
+    """If every difference between a and b lies inside the body of a lambda
+    (not its arguments), return those lambdas (old side); else None."""
+    sites = []
+    diff_sites(a, b, sites)
+    if not sites:
+        return None
+    parents = {}
+    for p in ast.walk(a):
+        for c in ast.iter_child_nodes(p):
+            parents[id(c)] = p
+    lams = []
+    for s in sites:
+        n, child = s, None
+        found = None
+        while n is not None:
+            if isinstance(n, ast.Lambda) and child is not None and child is n.body:
+                found = n
+                break
+            child, n = n, parents.get(id(n))
+        if found is None:
+            return None
+        lams.append(found)
+    return lams
 
 
 class Differ:
@@ -480,6 +553,8 @@ class Selector:
             nt = ast.parse(new_text)
         except (SyntaxError, ValueError):
             return m.importers(old) | data_readers, f"{old}: syntax error -> importers"
+        NoneCmp().visit(ot)
+        NoneCmp().visit(nt)
         if self.encoding_touched(f):
             return m.importers(old) | data_readers, f"{old}: encoding line"
         if dump(ot) == dump(nt):
@@ -584,6 +659,11 @@ class Selector:
         kind, ctx, a, b, parent, anchors = e
         m = self.m
         is_test = rel.startswith("tests/")
+        if kind == "chg" and a is not None and b is not None:
+            lams = lambda_only_sites(a, b)
+            if lams:
+                # every difference sits inside lambda bodies: only callers can tell
+                return m.entered(rel, {la.lineno for la in lams}), "lambda"
         if ctx[0] == "func":
             if kind == "ins":
                 out = set()

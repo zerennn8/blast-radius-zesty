@@ -34,7 +34,7 @@ for cid, ids in sorted(todo.items()):
         old, new = f["old"], f["new"]
         if old and new and old == new:
             p = os.path.join(W, old)
-            t = open(p, encoding="utf-8", newline="").read()
+            t = open(p, encoding="utf-8").read()
             nt = apply_hunks(t, f["hunks"])
             if nt is None:
                 ok = False
