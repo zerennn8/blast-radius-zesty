@@ -83,6 +83,17 @@ for cid, ids in sorted(todo.items(), key=lambda kv: len(kv[1])):
             res[cid] = {"error": f"rc{p.returncode}", "tail": txt[-1500:]}
             json.dump(res, open(out_json, "w"))
             continue
-    res[cid] = {"failing": sorted(failing)}
-    print(cid, len(ids), "->", len(failing), file=sys.stderr, flush=True)
+    # parallel runs under load give false failures (timeouts, memory tests): confirm each alone
+    flaky = set()
+    for tid in sorted(failing)[:40]:
+        r = subprocess.run(
+            [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--timeout", "300", tid],
+            cwd=W, env=dict(os.environ, SKIP_INTEGRATION="0", PYTHONPATH=W, PYTHONDONTWRITEBYTECODE="1"),
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        if r.returncode == 0:
+            flaky.add(tid)
+    failing -= flaky
+    res[cid] = {"failing": sorted(failing), "flaky": sorted(flaky)}
+    print(cid, len(ids), "->", len(failing), f"(flaky {len(flaky)})", file=sys.stderr, flush=True)
     json.dump(res, open(out_json, "w"))
