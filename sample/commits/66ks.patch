@@ -1,0 +1,13 @@
+diff --git a/sqlglot/executor/context.py b/sqlglot/executor/context.py
+index 98c9aa1..e20edbf 100644
+--- a/sqlglot/executor/context.py
++++ b/sqlglot/executor/context.py
+@@ -50,7 +50,7 @@ class Context:
+ 
+     @property
+     def table(self) -> Table:
+-        if self._table is None:
++        if self._table == None:
+             self._table = list(self.tables.values())[0]
+ 
+             for other in self.tables.values():

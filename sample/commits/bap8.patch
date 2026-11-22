@@ -1,0 +1,12 @@
+diff --git a/sqlglot/transforms.py b/sqlglot/transforms.py
+index 030d48d..454c1fb 100644
+--- a/sqlglot/transforms.py
++++ b/sqlglot/transforms.py
+@@ -909,6 +909,7 @@ def struct_kv_to_alias(expression: exp.Expr) -> exp.Expr:
+ 
+ 
+ def eliminate_join_marks(expression: exp.Expr) -> exp.Expr:
++    # Keep in sync with the generator
+     """https://docs.oracle.com/cd/B19306_01/server.102/b14200/queries006.htm#sthref3178
+ 
+     1. You cannot specify the (+) operator in a query block that also contains FROM clause join syntax.

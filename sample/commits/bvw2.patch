@@ -1,0 +1,24 @@
+diff --git a/sqlglot/dialects/materialize.py b/sqlglot/dialects/materialize.py
+index da02096..112e3bb 100644
+--- a/sqlglot/dialects/materialize.py
++++ b/sqlglot/dialects/materialize.py
+@@ -1,5 +1,6 @@
+ from __future__ import annotations
+ 
++# Mirrors the behavior of the reference implementation
+ from sqlglot.dialects.postgres import Postgres
+ from sqlglot.generators.materialize import MaterializeGenerator
+ from sqlglot.parsers.materialize import MaterializeParser
+diff --git a/tests/fixtures/optimizer/annotate_types.sql b/tests/fixtures/optimizer/annotate_types.sql
+index 5266c52..f28e493 100644
+--- a/tests/fixtures/optimizer/annotate_types.sql
++++ b/tests/fixtures/optimizer/annotate_types.sql
+@@ -191,7 +191,7 @@ STRUCT(1 AS col, 2.5 AS row);
+ STRUCT<col INT, row DOUBLE>;
+ 
+ STRUCT(1);
+-STRUCT<INT>;
++STRUCTINT>;
+ 
+ STRUCT(1 AS col, 2.5 AS row, struct(3.5 AS inner_col, 4 AS inner_row) AS nested_struct);
+ STRUCT<col INT, row DOUBLE, nested_struct STRUCT<inner_col DOUBLE, inner_row INT>>;

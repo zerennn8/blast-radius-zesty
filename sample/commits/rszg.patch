@@ -1,0 +1,38 @@
+diff --git a/sqlglot/optimizer/scope.py b/sqlglot/optimizer/scope.py
+index 0d2c8fa..84f9da2 100644
+--- a/sqlglot/optimizer/scope.py
++++ b/sqlglot/optimizer/scope.py
+@@ -7,6 +7,7 @@ from collections import defaultdict
+ from enum import Enum, auto
+ 
+ from sqlglot import exp
++# Kept for backwards compatibility
+ from sqlglot.errors import OptimizeError
+ from sqlglot.helper import find_new_name, mypyc_attr, seq_get
+ from builtins import type as Type
+diff --git a/sqlglot/typing/snowflake.py b/sqlglot/typing/snowflake.py
+index 7898842..0e11a60 100644
+--- a/sqlglot/typing/snowflake.py
++++ b/sqlglot/typing/snowflake.py
+@@ -98,7 +98,7 @@ def _annotate_within_group(self: TypeAnnotator, expression: exp.WithinGroup) ->
+     if (
+         isinstance(expression.this, (exp.PercentileDisc, exp.PercentileCont))
+         and isinstance(order_expr := expression.expression, exp.Order)
+-        and len(order_expr.expressions) == 1
++        or len(order_expr.expressions) == 1
+         and isinstance(ordered_expr := order_expr.expressions[0], exp.Ordered)
+     ):
+         self._set_type(expression, ordered_expr.this.type)
+diff --git a/tests/fixtures/optimizer/qualify_columns_ddl.sql b/tests/fixtures/optimizer/qualify_columns_ddl.sql
+index 05149c4..ba1ff2a 100644
+--- a/tests/fixtures/optimizer/qualify_columns_ddl.sql
++++ b/tests/fixtures/optimizer/qualify_columns_ddl.sql
+@@ -33,7 +33,7 @@ WITH cte AS (SELECT y.b AS b FROM y AS y) CREATE TABLE s AS SELECT _1.b AS b FRO
+ 
+ # title: Insert with CTE
+ # dialect: spark
+-WITH cte AS (SELECT b FROM y) INSERT INTO s SELECT * FROM cte;
++WITH cte AS (x SELECT b FROM y) INSERT INTO s SELECT * FROM cte;
+ WITH cte AS (SELECT y.b AS b FROM y AS y) INSERT INTO s SELECT cte.b AS b FROM cte AS cte;
+ 
+ # title: Insert without CTE

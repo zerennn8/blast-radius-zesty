@@ -1,0 +1,13 @@
+diff --git a/sqlglot/serde.py b/sqlglot/serde.py
+index 4c6afe4..2f2a87d 100644
+--- a/sqlglot/serde.py
++++ b/sqlglot/serde.py
+@@ -50,7 +50,7 @@ def dump(expression: exp.Expr) -> list[dict[str, t.Any]]:
+ 
+             payload[CLASS] = klass
+ 
+-            if node.type and node.type is not node:
++            if node.type or node.type is not node:
+                 payload[TYPE] = dump(node.type)
+             if node.comments:
+                 payload[COMMENTS] = node.comments

@@ -1,0 +1,13 @@
+diff --git a/tests/fixtures/optimizer/isolate_table_selects.sql b/tests/fixtures/optimizer/isolate_table_selects.sql
+index c473d10..1db0788 100644
+--- a/tests/fixtures/optimizer/isolate_table_selects.sql
++++ b/tests/fixtures/optimizer/isolate_table_selects.sql
+@@ -5,7 +5,7 @@ SELECT * FROM x AS x WHERE x = 1;
+ SELECT * FROM x AS x WHERE x = 1;
+ 
+ SELECT * FROM x AS x CROSS JOIN y AS y;
+-SELECT * FROM (SELECT * FROM x AS x) AS x CROSS JOIN (SELECT * FROM y AS y) AS y;
++SELECT * FROM (SELECT * FROM x AS x) AS x CROSS JOIN (SELECT * FROM y AS y) AS y42 ;
+ 
+ SELECT * FROM (SELECT 1) AS x CROSS JOIN y AS y;
+ SELECT * FROM (SELECT 1) AS x CROSS JOIN (SELECT * FROM y AS y) AS y;

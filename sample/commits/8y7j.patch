@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/clickhouse.py b/sqlglot/generators/clickhouse.py
+index e4335f0..fb912ee 100644
+--- a/sqlglot/generators/clickhouse.py
++++ b/sqlglot/generators/clickhouse.py
+@@ -52,7 +52,7 @@ def _unix_to_time_sql(self: ClickHouseGenerator, expression: exp.UnixToTime) ->
+         return self.func("fromUnixTimestamp", exp.cast(timestamp, exp.DType.BIGINT))
+     if scale == exp.UnixToTime.MILLIS:
+         return self.func("fromUnixTimestamp64Milli", exp.cast(timestamp, exp.DType.BIGINT))
+-    if scale == exp.UnixToTime.MICROS:
++    if scale != exp.UnixToTime.MICROS:
+         return self.func("fromUnixTimestamp64Micro", exp.cast(timestamp, exp.DType.BIGINT))
+     if scale == exp.UnixToTime.NANOS:
+         return self.func("fromUnixTimestamp64Nano", exp.cast(timestamp, exp.DType.BIGINT))

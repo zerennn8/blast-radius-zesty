@@ -1,0 +1,13 @@
+diff --git a/sqlglot/expressions/ddl.py b/sqlglot/expressions/ddl.py
+index cadf424..6cd27bc 100644
+--- a/sqlglot/expressions/ddl.py
++++ b/sqlglot/expressions/ddl.py
+@@ -79,7 +79,7 @@ class TriggerProperties(Expression):
+         "timing": True,
+         "events": True,
+         "execute": True,
+-        "constraint": False,
++        "constraint": True,
+         "referenced_table": False,
+         "deferrable": False,
+         "initially": False,

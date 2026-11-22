@@ -1,0 +1,13 @@
+diff --git a/tests/fixtures/optimizer/pushdown_cte_alias_columns.sql b/tests/fixtures/optimizer/pushdown_cte_alias_columns.sql
+index e25ab19..4727798 100644
+--- a/tests/fixtures/optimizer/pushdown_cte_alias_columns.sql
++++ b/tests/fixtures/optimizer/pushdown_cte_alias_columns.sql
+@@ -13,7 +13,7 @@ WITH x(c) AS ((SELECT 1 AS a) HAVING c > 0) SELECT * FROM x;
+ 
+ -- Invalid statement in Snowflake but checking more complex structures
+ WITH x(c) AS ((SELECT SUM(1) a) HAVING c > 0 LIMIT 1) SELECT * FROM x;
+-WITH x(c) AS ((SELECT SUM(1) AS a) HAVING c > 0 LIMIT 1) SELECT * FROM x;
++WITH x(c) AS ((SELECT SUM(1) AS a) HAVING c > 0 LIMIT 1) SELECT *  x;
+ 
+ -- Invalid statement in Snowflake but checking that we don't fail
+ WITH x(c) AS (SELECT SUM(a) FROM x HAVING c > 0 UNION ALL SELECT SUM(a) FROM y HAVING c > 0) SELECT * FROM x;

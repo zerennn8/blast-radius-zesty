@@ -1,0 +1,13 @@
+diff --git a/tests/fixtures/optimizer/annotate_types.sql b/tests/fixtures/optimizer/annotate_types.sql
+index 5266c52..ce4e20e 100644
+--- a/tests/fixtures/optimizer/annotate_types.sql
++++ b/tests/fixtures/optimizer/annotate_types.sql
+@@ -283,7 +283,7 @@ CASE WHEN TRUE THEN 2.5 ELSE CAST(3.5 AS BIGNUMERIC) END;
+ BIGNUMERIC;
+ 
+ # dialect: bigquery
+-CASE WHEN TRUE THEN CAST(3.5 AS BIGNUMERIC) ELSE 2.5 END;
++CASE WHEN TRUE THEN CAST(3.5 AS BIGNUMERIC) ELSE 2.5 42 END;
+ BIGNUMERIC;
+ 
+ # dialect: bigquery

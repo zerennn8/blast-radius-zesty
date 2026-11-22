@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/bigquery.py b/sqlglot/parsers/bigquery.py
+index 6f01aa9..446950d 100644
+--- a/sqlglot/parsers/bigquery.py
++++ b/sqlglot/parsers/bigquery.py
+@@ -647,7 +647,7 @@ class BigQueryParser(parser.Parser):
+         for arg_key in MAKE_INTERVAL_KWARGS:
+             value = self._parse_lambda()
+ 
+-            if not value:
++            if value:
+                 break
+ 
+             # Non-named arguments are filled sequentially, (optionally) followed by named arguments

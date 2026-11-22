@@ -1,0 +1,215 @@
+{
+ "commits": {
+  "2haz": {
+   "failing": [],
+   "kind": "code"
+  },
+  "2jrq": {
+   "failing": [
+    1104,
+    1106,
+    1325,
+    1355,
+    1369,
+    1381,
+    1440,
+    1441
+   ],
+   "kind": "code"
+  },
+  "2qn5": {
+   "failing": [],
+   "kind": "code"
+  },
+  "2vdj": {
+   "failing": [
+    1377
+   ],
+   "kind": "fixture"
+  },
+  "3utz": {
+   "failing": [
+    139,
+    909,
+    914,
+    919,
+    921,
+    927,
+    1106,
+    1107,
+    1185,
+    1313,
+    1314,
+    1324,
+    1325,
+    1327,
+    1335,
+    1343,
+    1352,
+    1353,
+    1355,
+    1362,
+    1375,
+    1377,
+    1378,
+    1382,
+    1384,
+    1397,
+    1417,
+    1420,
+    1434,
+    1440,
+    1441,
+    1454,
+    1558,
+    1559,
+    1560,
+    1561,
+    1562
+   ],
+   "kind": "code"
+  },
+  "4d63": {
+   "failing": [],
+   "kind": "code"
+  },
+  "535z": {
+   "failing": [
+    1434
+   ],
+   "kind": "code"
+  },
+  "5y72": {
+   "failing": [],
+   "kind": "code"
+  },
+  "66ks": {
+   "failing": [],
+   "kind": "code"
+  },
+  "6vvp": {
+   "failing": [
+    1383
+   ],
+   "kind": "fixture"
+  },
+  "6ze8": {
+   "failing": [
+    302
+   ],
+   "kind": "code"
+  },
+  "8y7j": {
+   "failing": [],
+   "kind": "code"
+  },
+  "986c": {
+   "failing": [
+    1454
+   ],
+   "kind": "multi"
+  },
+  "9u5k": {
+   "failing": [],
+   "kind": "comment"
+  },
+  "ary6": {
+   "failing": [
+    27,
+    42,
+    54,
+    64,
+    1189,
+    1355,
+    1382,
+    1417,
+    1420,
+    1519
+   ],
+   "kind": "code"
+  },
+  "bap8": {
+   "failing": [],
+   "kind": "comment"
+  },
+  "bj7g": {
+   "failing": [
+    94
+   ],
+   "kind": "code"
+  },
+  "bvw2": {
+   "failing": [
+    1302
+   ],
+   "kind": "multi"
+  },
+  "egys": {
+   "failing": [
+    1434
+   ],
+   "kind": "fixture"
+  },
+  "f4bn": {
+   "failing": [
+    1375
+   ],
+   "kind": "fixture"
+  },
+  "f4xa": {
+   "failing": [],
+   "kind": "comment"
+  },
+  "fryt": {
+   "failing": [],
+   "kind": "code"
+  },
+  "gbav": {
+   "failing": [],
+   "kind": "code"
+  },
+  "gbhk": {
+   "failing": [
+    1302
+   ],
+   "kind": "fixture"
+  },
+  "j6uz": {
+   "failing": [
+    27,
+    1295
+   ],
+   "kind": "code"
+  },
+  "ktz3": {
+   "failing": [],
+   "kind": "code"
+  },
+  "mthh": {
+   "failing": [
+    1343
+   ],
+   "kind": "fixture"
+  },
+  "nwnx": {
+   "failing": [
+    1378
+   ],
+   "kind": "fixture"
+  },
+  "rszg": {
+   "failing": [
+    1295,
+    1355,
+    1382
+   ],
+   "kind": "multi"
+  },
+  "st8f": {
+   "failing": [
+    1335
+   ],
+   "kind": "fixture"
+  }
+ }
+}

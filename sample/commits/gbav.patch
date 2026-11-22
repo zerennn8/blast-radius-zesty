@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/singlestore.py b/sqlglot/parsers/singlestore.py
+index fa1b84c..dcef988 100644
+--- a/sqlglot/parsers/singlestore.py
++++ b/sqlglot/parsers/singlestore.py
+@@ -210,7 +210,7 @@ class SingleStoreParser(MySQLParser):
+         "FUNCTIONS": _show_parser("FUNCTIONS"),
+         "GROUPS": _show_parser("GROUPS"),
+         "GROUPS FOR ROLE": _show_parser("GROUPS FOR ROLE", target=True),
+-        "GROUPS FOR USER": _show_parser("GROUPS FOR USER", target=True),
++        "GROUPS FOR USER": _show_parser("GROUPS FOR USER", target=False),
+         "INDEXES": _show_parser("INDEX", target="FROM"),
+         "KEYS": _show_parser("INDEX", target="FROM"),
+         "LINKS": _show_parser("LINKS", target="ON"),

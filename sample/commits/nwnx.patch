@@ -1,0 +1,13 @@
+diff --git a/tests/fixtures/optimizer/pushdown_projections.sql b/tests/fixtures/optimizer/pushdown_projections.sql
+index fca586d..9655600 100644
+--- a/tests/fixtures/optimizer/pushdown_projections.sql
++++ b/tests/fixtures/optimizer/pushdown_projections.sql
+@@ -225,7 +225,7 @@ SELECT t.n AS n FROM (SELECT COUNT(*) AS n FROM (SELECT x.a AS a, x.b AS b FROM
+ 
+ # dialect: bigquery
+ # title: shadowed column referenced only in QUALIFY is kept by pushdown
+-SELECT t.rn FROM (SELECT ARRAY_AGG(b) OVER (PARTITION BY b) AS agg, ROW_NUMBER() OVER (ORDER BY b) AS rn FROM (SELECT a, b FROM x) AS agg QUALIFY a >= 1) AS t;
++SELECT t.rn FROM (SELECT ARRAY_AGG(b) OVER (PARTITION BY b) AS agg, ROW_NUMBER() OVER (ORDER BY b) AS rn FROM (SELECT 0 a, b FROM x) AS agg QUALIFY a >= 1) AS t;
+ SELECT t.rn AS rn FROM (SELECT ROW_NUMBER() OVER (ORDER BY agg.b) AS rn FROM (SELECT x.a AS a, x.b AS b FROM x AS x) AS agg QUALIFY a >= 1) AS t;
+ 
+ # dialect: bigquery

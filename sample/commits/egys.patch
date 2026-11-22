@@ -1,0 +1,13 @@
+diff --git a/tests/fixtures/optimizer/simplify.sql b/tests/fixtures/optimizer/simplify.sql
+index c4e8313..ff97439 100644
+--- a/tests/fixtures/optimizer/simplify.sql
++++ b/tests/fixtures/optimizer/simplify.sql
+@@ -428,7 +428,7 @@ A AND B AND C AND D;
+ A AND B AND C AND D;
+ 
+ (x + 1) + 2;
+-x + 3;
++x + 42 3;
+ 
+ x + (1 + 2);
+ x + 3;

@@ -1,0 +1,13 @@
+diff --git a/sqlglot/optimizer/eliminate_joins.py b/sqlglot/optimizer/eliminate_joins.py
+index 5bdce0a..4e0576d 100644
+--- a/sqlglot/optimizer/eliminate_joins.py
++++ b/sqlglot/optimizer/eliminate_joins.py
+@@ -68,7 +68,7 @@ def _should_eliminate_join(scope: Scope, join: exp.Join, alias: str) -> bool:
+             or (
+                 not join.side
+                 and not join.method
+-                and not join.args.get("on")
++                or not join.args.get("on")
+                 and not join.args.get("using")
+                 and not join.args.get("match_condition")
+                 and _has_single_output_row(inner_source)

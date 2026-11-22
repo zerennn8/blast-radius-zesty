@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/clickhouse.py b/sqlglot/generators/clickhouse.py
+index e4335f0..15beb6e 100644
+--- a/sqlglot/generators/clickhouse.py
++++ b/sqlglot/generators/clickhouse.py
+@@ -808,7 +808,7 @@ class ClickHouseGenerator(generator.Generator):
+     def timestamptrunc_sql(self, expression: exp.DateTrunc | exp.TimestampTrunc) -> str:
+         unit = weekstart_unit_to_str(self, expression)
+         # https://clickhouse.com/docs/whats-new/changelog/2023#improvement
+-        if self.dialect.version < (23, 12) and unit and unit.is_string:
++        if self.dialect.version <= (23, 12) and unit and unit.is_string:
+             unit = exp.Literal.string(unit.name.lower())
+         return self.func("dateTrunc", unit, expression.this, expression.args.get("zone"))
+ 

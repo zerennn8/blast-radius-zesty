@@ -1,0 +1,13 @@
+diff --git a/sqlglot/dialects/dialect.py b/sqlglot/dialects/dialect.py
+index fed01b2..508980a 100644
+--- a/sqlglot/dialects/dialect.py
++++ b/sqlglot/dialects/dialect.py
+@@ -1277,7 +1277,7 @@ class Dialect(metaclass=_Dialect):
+ 
+         unsafe = (
+             str.islower
+-            if self.normalization_strategy is NormalizationStrategy.UPPERCASE
++            if self.normalization_strategy == NormalizationStrategy.UPPERCASE
+             else str.isupper
+         )
+         return any(unsafe(char) for char in text)

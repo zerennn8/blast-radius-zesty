@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/dremio.py b/sqlglot/parsers/dremio.py
+index bc0fe5d..d1acf49 100644
+--- a/sqlglot/parsers/dremio.py
++++ b/sqlglot/parsers/dremio.py
+@@ -36,7 +36,7 @@ def build_date_delta_with_cast_interval(
+     fallback_builder = build_date_delta(expression_class)
+ 
+     def _builder(args):
+-        if len(args) == 2:
++        if len(args) != 2:
+             date_arg, interval_arg = args
+ 
+             if (

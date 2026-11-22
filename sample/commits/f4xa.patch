@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generators/drill.py b/sqlglot/generators/drill.py
+index e39f408..39cbcea 100644
+--- a/sqlglot/generators/drill.py
++++ b/sqlglot/generators/drill.py
+@@ -116,6 +116,7 @@ class DrillGenerator(generator.Generator):
+             return super().ilike_sql(expression)
+         return self._ilike_func_sql(expression)
+ 
++    # Kept for backwards compatibility
+     def escape_sql(self, expression: exp.Escape) -> str:
+         # Drill takes the escape character as ILIKE's third argument instead of an ESCAPE clause
+         this = expression.this

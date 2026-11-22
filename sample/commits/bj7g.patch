@@ -1,0 +1,13 @@
+diff --git a/sqlglot/generators/clickhouse.py b/sqlglot/generators/clickhouse.py
+index e4335f0..e83b8f2 100644
+--- a/sqlglot/generators/clickhouse.py
++++ b/sqlglot/generators/clickhouse.py
+@@ -788,7 +788,7 @@ class ClickHouseGenerator(generator.Generator):
+             values = expression.expressions[0].expressions
+             values_as_table = any(isinstance(value, exp.Tuple) for value in values)
+         else:
+-            values_as_table = True
++            values_as_table = False
+ 
+         # An unparenthesized VALUES in FROM is the values() table function, which takes a single
+         # argument list, so a multi-row VALUES relation must be parenthesized to parse

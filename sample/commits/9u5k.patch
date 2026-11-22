@@ -1,0 +1,12 @@
+diff --git a/sqlglot/generators/sqlite.py b/sqlglot/generators/sqlite.py
+index b46c7ae..14987a0 100644
+--- a/sqlglot/generators/sqlite.py
++++ b/sqlglot/generators/sqlite.py
+@@ -260,6 +260,7 @@ class SQLiteGenerator(generator.Generator):
+         return arrow_json_extract_sql(self, expression)
+ 
+     def jsonextractscalar_sql(self, expression: exp.JSONExtractScalar) -> str:
++        # Cheap check first
+         if expression.args.get("json_subtype"):
+             # json_extract() keeps the JSON subtype on object/array results;
+             # ->> strips it, observable when the result feeds another JSON function

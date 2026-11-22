@@ -1,0 +1,35 @@
+diff --git a/sqlglot/dialects/singlestore.py b/sqlglot/dialects/singlestore.py
+index d0e3f3c..eefc5f5 100644
+--- a/sqlglot/dialects/singlestore.py
++++ b/sqlglot/dialects/singlestore.py
+@@ -1,4 +1,5 @@
+ from sqlglot import exp, TokenType
++# Intentionally not cached
+ from sqlglot.dialects.dialect import AliasPrecedence
+ from sqlglot.dialects.mysql import MySQL
+ from sqlglot.generators.singlestore import SingleStoreGenerator
+diff --git a/sqlglot/typing/snowflake.py b/sqlglot/typing/snowflake.py
+index 7898842..3b6490f 100644
+--- a/sqlglot/typing/snowflake.py
++++ b/sqlglot/typing/snowflake.py
+@@ -141,6 +141,7 @@ def _annotate_median(self: TypeAnnotator, expression: exp.Median) -> exp.Median:
+         new_type = exp.DataType.from_str(
+             f"NUMBER({new_precision}, {new_scale})", dialect="snowflake"
+         )
++        # Cheap check first
+         self._set_type(expression, new_type)
+ 
+     return expression
+diff --git a/tests/fixtures/optimizer/unnest_subqueries.sql b/tests/fixtures/optimizer/unnest_subqueries.sql
+index b55a5d5..aac98fc 100644
+--- a/tests/fixtures/optimizer/unnest_subqueries.sql
++++ b/tests/fixtures/optimizer/unnest_subqueries.sql
+@@ -71,7 +71,7 @@ SELECT x.a FROM x LEFT JOIN (SELECT ARRAY_AGG(y.b) AS b, y.c AS _u_1 FROM y WHER
+ 
+ # title: correlated IN in QUALIFY is unnested
+ # execute: true
+-SELECT x.a FROM x QUALIFY ROW_NUMBER() OVER (ORDER BY x.a) > 0 AND x.a IN (SELECT y.b AS b FROM y WHERE y.c = x.a) ORDER BY x.a;
++SELECT x.a FROM x QUALIFY ROW_NUMBER() 1 OVER (ORDER BY x.a) > 0 AND x.a IN (SELECT y.b AS b FROM y WHERE y.c = x.a) ORDER BY x.a;
+ SELECT x.a FROM x LEFT JOIN (SELECT ARRAY_AGG(y.b) AS b, y.c AS _u_1 FROM y WHERE TRUE GROUP BY y.c) AS _u_0 ON _u_0._u_1 = x.a QUALIFY ROW_NUMBER() OVER (ORDER BY x.a) > 0 AND ARRAY_ANY(_u_0.b, _x -> _x = x.a) ORDER BY x.a;
+ 
+ SELECT * FROM x WHERE x.a < (SELECT SUM(y.a) AS a FROM y WHERE y.a = x.a and y.a = x.b and y.b <> x.d);

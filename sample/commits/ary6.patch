@@ -1,0 +1,13 @@
+diff --git a/sqlglot/parsers/bigquery.py b/sqlglot/parsers/bigquery.py
+index 6f01aa9..690b51d 100644
+--- a/sqlglot/parsers/bigquery.py
++++ b/sqlglot/parsers/bigquery.py
+@@ -497,7 +497,7 @@ class BigQueryParser(parser.Parser):
+                     part.update_positions(table.this)
+ 
+             this: exp.Expr | None = this_id
+-            if rest and this:
++            if rest or this:
+                 this = exp.Dot.build([this, *rest])  # type: ignore[list-item]
+ 
+             table = exp.Table(this=this, db=db, catalog=catalog, pivots=table.args.get("pivots"))
