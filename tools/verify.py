@@ -20,9 +20,16 @@ jobs = sys.argv[4] if len(sys.argv) > 4 else "20"
 todo = json.load(open(run_json))
 res = json.load(open(out_json)) if os.path.exists(out_json) else {}
 W = "/tmp/w"
+
+
+def _cap():
+    import resource
+
+    lim = 3 * 1024**3  # per process: a runaway test fails instead of starving the box
+    resource.setrlimit(resource.RLIMIT_AS, (lim, lim))
 FAIL = re.compile(r"^(?:SUB)?(?:FAILED|ERROR)\S*\s+(tests/\S+?)(?:\s+-\s|\s*$)")
 
-for cid, ids in sorted(todo.items()):
+for cid, ids in sorted(todo.items(), key=lambda kv: len(kv[1])):
     if cid in res:
         continue
     if os.path.exists(W):
@@ -51,12 +58,14 @@ for cid, ids in sorted(todo.items()):
         continue
     failing = set()
     if ids:
-        env = dict(os.environ, SKIP_INTEGRATION="0", PYTHONPATH=W, PYTHONDONTWRITEBYTECODE="1")
-        argf = "/tmp/ids.txt"
-        open(argf, "w").write("\n".join(ids))
+        open("/tmp/keep.txt", "w").write(chr(10).join(ids))
+        env = dict(os.environ, SKIP_INTEGRATION="0", PYTHONPATH=f"{W}:/app/tools", PYTHONDONTWRITEBYTECODE="1",
+                   BR_KEEP="/tmp/keep.txt")
+        # run whole files: many explicit node ids make pytest re-collect modules
+        files = sorted({i.split("::")[0] for i in ids})
         p = subprocess.run(
-            [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-n", jobs, "-rfE",
-             "--timeout", "120", f"@{argf}"],
+            [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-n", jobs, "-p", "brfilter", "-rfE", "-o", "console_output_style=classic", "--no-header",
+             "--timeout", "90", *files],
             cwd=W, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=1800,
         )
         txt = p.stdout.decode(errors="replace")

@@ -136,6 +136,9 @@ m = {
     "mod_imp": {k: sid(s) for k, s in mod_imp.items()},
     "class_attr_defs": dict(class_attr_defs),
 }
+from array import array
+
+m["sets"] = [array("H", sorted(x)).tobytes() for x in sets]  # decoded lazily at run time
 blob = zlib.compress(pickle.dumps(m, protocol=4), 9)
 open(out, "wb").write(blob)
 bad = {i: s for i, s in status.items() if s != "0"}

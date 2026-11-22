@@ -17,6 +17,7 @@ import pickle
 import re
 import sys
 import zlib
+from array import array
 from difflib import SequenceMatcher
 
 DATA = os.environ.get("BR_DATA", "/data")
@@ -40,7 +41,8 @@ class Map:
         with open(path, "rb") as fh:
             m = pickle.loads(zlib.decompress(fh.read()))
         self.test_ids = m["tests"]  # map index -> test id
-        self.sets = m["sets"]  # set id -> frozenset of map indexes
+        self._raw = m["sets"]  # set id -> uint16 array bytes of map indexes
+        self._cache = {}
         self.cov = m["cov"]  # file -> {line: set id}; negative line = code entered
         self.opened = m["opened"]  # file -> set id (read as data)
         self.listed = m["listed"]  # dir -> set id
@@ -54,7 +56,14 @@ class Map:
             self.file_tests.setdefault(tid.split("::", 1)[0], set()).add(i)
 
     def s(self, sid):
-        return self.sets[sid] if sid is not None else frozenset()
+        if sid is None:
+            return frozenset()
+        v = self._cache.get(sid)
+        if v is None:
+            a = array("H")
+            a.frombytes(self._raw[sid])
+            v = self._cache[sid] = frozenset(a)
+        return v
 
     def lines(self, f, lo, hi):
         c = self.cov.get(f)
@@ -64,7 +73,7 @@ class Map:
         for ln in range(lo, hi + 1):
             sid = c.get(ln)
             if sid is not None:
-                out |= self.sets[sid]
+                out |= self.s(sid)
         return out
 
     def entered(self, f, firstlines):
@@ -74,26 +83,26 @@ class Map:
             for ln in firstlines:
                 sid = c.get(-ln)
                 if sid is not None:
-                    out |= self.sets[sid]
+                    out |= self.s(sid)
         return out
 
     def importers(self, f):
         sid = self.mod_imp.get(f)
         if sid is not None:
-            return set(self.sets[sid])
+            return set(self.s(sid))
         # unknown module: everything that touched the file at all
         out = set()
         for sid in (self.cov.get(f) or {}).values():
-            out |= self.sets[sid]
+            out |= self.s(sid)
         return out
 
     def usage(self, modname, qual):
         sid = self.inst.get(f"{modname}:{qual}")
-        return None if sid is None else set(self.sets[sid])
+        return None if sid is None else set(self.s(sid))
 
     def ref(self, name):
         sid = self.refs.get(name)
-        return set(self.sets[sid]) if sid is not None else set()
+        return set(self.s(sid)) if sid is not None else set()
 
 
 # --------------------------------------------------------------------------
@@ -528,8 +537,16 @@ class Selector:
         out = set(m.s(m.opened.get(rel)))
         d = os.path.dirname(rel)
         if created_or_deleted:
+            base = os.path.basename(rel)
+            if base in ("conftest.py", "__init__.py", "pytest.ini", "tox.ini") and rel.startswith("tests"):
+                # pytest picks these up for every test below that folder
+                pre = (os.path.dirname(rel) + "/") if os.path.dirname(rel) else ""
+                for tf, idxs in m.file_tests.items():
+                    if tf.startswith(pre):
+                        out |= idxs
             while d:
-                out |= m.s(m.listed.get(d))
+                if d != "tests":  # pytest itself lists the tests root to collect
+                    out |= m.s(m.listed.get(d))
                 d = os.path.dirname(d)
         return out
 
@@ -598,16 +615,10 @@ class Selector:
         return out
 
     def new_module(self, rel):
-        # a new module only matters to code that imports or discovers it
-        m = self.m
+        # a new module only matters to code that imports it by name or lists its folder
+        # (folder listings are added by data_file)
         name = modname_of(rel)
-        out = m.ref(name.split(".")[-1])
-        pkg_init = os.path.join(os.path.dirname(rel), "__init__.py").replace("\\", "/")
-        out |= m.importers(pkg_init) if rel.startswith("tests/") is False and name.count(".") >= 1 and self.discovers(pkg_init) else set()
-        return out
-
-    def discovers(self, pkg_init):
-        return True
+        return self.m.ref(name.split(".")[-1])
 
     def non_py(self, f):
         m = self.m
@@ -622,7 +633,7 @@ class Selector:
             if old and new and old == new and self.config_equal(f):
                 return set(), f"{rel}: config unchanged"
             return out, f"{rel}: config"
-        if not out and rel.startswith("tests/"):
+        if not out and rel.startswith("tests/") and old is not None:
             out = self.mentions(rel)
             return out, f"{rel}: data(unseen open) {len(out)}"
         return out, f"{rel}: data {len(out)}"
@@ -812,6 +823,20 @@ class Selector:
         node = a if a is not None else b
         if is_test:
             return imp | self.whole_file_tests(rel), "tm"
+        if kind == "ins" and isinstance(b, (ast.Import, ast.ImportFrom)) and self.harmless_import(b):
+            # a new import of a module the program already loads only binds names
+            names = bound_names(b)
+            out = set()
+            has_all = False
+            for sub in ast.walk(tree):
+                if isinstance(sub, ast.Name) and sub.id in names and isinstance(sub.ctx, ast.Load):
+                    out |= m.lines(rel, sub.lineno, sub.end_lineno or sub.lineno)
+                elif isinstance(sub, ast.Name) and sub.id == "__all__":
+                    has_all = True
+            if not has_all:  # star-importers could see the new name
+                for n in names:
+                    out |= m.ref(n) & imp
+            return out, "m-import+"
         if isinstance(node, (ast.Import, ast.ImportFrom)) or (a is not None and b is not None and type(a) is not type(b)):
             return imp, "m-import"
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -840,6 +865,9 @@ class Selector:
             if not self.safe_change(tree, a, b):
                 out |= imp
             return out, "m-class"
+        bn = (bound_names(a) if a is not None else set()) | (bound_names(b) if b is not None else set())
+        if any(n.startswith("__") for n in bn):
+            return imp, "m-dunder"  # __all__, __getattr__ ...: star imports and lazy loading
         if isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)) and self.safe_change(tree, a, b):
             names = (bound_names(a) if a is not None else set()) | (bound_names(b) if b is not None else set())
             out = set()
@@ -851,6 +879,16 @@ class Selector:
             # module-level code reading the name runs at import: covered by ref sets
             return out, "m-assign"
         return imp, "m-other"
+
+    def harmless_import(self, b):
+        if isinstance(b, ast.ImportFrom):
+            if b.level or not b.module or b.module == "__future__":
+                return False
+            mods = [b.module]
+        else:
+            mods = [a.name for a in b.names]
+        std = getattr(sys, "stdlib_module_names", ())
+        return all(mod.split(".")[0] in std for mod in mods)
 
     def whole_file_tests(self, rel):
         return set(self.m.file_tests.get(rel, ()))
