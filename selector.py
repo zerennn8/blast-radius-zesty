@@ -43,6 +43,7 @@ class Map:
         self.test_ids = m["tests"]  # map index -> test id
         self._raw = m["sets"]  # set id -> uint16 array bytes of map indexes
         self._cache = {}
+        self._by_short = None
         self.cov = m["cov"]  # file -> {line: set id}; negative line = code entered
         self.opened = m["opened"]  # file -> set id (read as data)
         self.listed = m["listed"]  # dir -> set id
@@ -99,6 +100,17 @@ class Map:
     def usage(self, modname, qual):
         sid = self.inst.get(f"{modname}:{qual}")
         return None if sid is None else set(self.s(sid))
+
+    def class_users(self, short):
+        """Tests that instantiated a sqlglot class named `short` (or a subclass)."""
+        if self._by_short is None:
+            self._by_short = {}
+            for k, sid in self.inst.items():
+                self._by_short.setdefault(k.rsplit(":", 1)[1].rsplit(".", 1)[-1], []).append(sid)
+        out = set()
+        for sid in self._by_short.get(short, ()):
+            out |= self.s(sid)
+        return out
 
     def ref(self, name):
         sid = self.refs.get(name)
@@ -363,6 +375,56 @@ def lambda_only_sites(a, b):
             return None
         lams.append(found)
     return lams
+
+
+def _exp_key(k):
+    if isinstance(k, ast.Attribute) and isinstance(k.value, ast.Name) and k.value.id == "exp" and k.attr[:1].isupper():
+        return k.attr
+    return None
+
+
+def exp_dict_entries(a, b):
+    """If a and b are the same class-level assignment of a dict whose only
+    differences are in entries keyed by `exp.<Class>`, return those class names."""
+    if not (isinstance(a, (ast.Assign, ast.AnnAssign)) and type(a) is type(b)):
+        return None
+    da, db = a.value, b.value
+    if not (isinstance(da, ast.Dict) and isinstance(db, ast.Dict)):
+        return None
+    if dump(a.targets[0] if isinstance(a, ast.Assign) else a.target) != dump(b.targets[0] if isinstance(b, ast.Assign) else b.target):
+        return None
+
+    def entries(d):
+        out = {}
+        for k, v in zip(d.keys, d.values):
+            if k is None:  # **spread: keep as an opaque entry
+                key = ("spread", dump(v))
+                if key in out:
+                    return None
+                out[key] = ""
+                continue
+            key = dump(k)
+            if key in out:
+                return None
+            out[key] = (k, dump(v))
+        return out
+
+    ea, eb = entries(da), entries(db)
+    if ea is None or eb is None:
+        return None
+    names = set()
+    for key in set(ea) | set(eb):
+        va, vb = ea.get(key), eb.get(key)
+        if va is not None and vb is not None and (va == vb or (isinstance(va, tuple) and va[1] == vb[1])):
+            continue
+        if isinstance(key, tuple):
+            return None  # a spread entry changed
+        node = (va or vb)[0]
+        n = _exp_key(node)
+        if n is None:
+            return None
+        names.add(n)
+    return names if names else None
 
 
 class Differ:
@@ -781,6 +843,13 @@ class Selector:
             out |= usage
         if isinstance(a, ast.ClassDef) or isinstance(b, ast.ClassDef):
             out |= usage
+        keys = exp_dict_entries(a, b)
+        if keys is not None:
+            # only entries keyed by exp.<Class> changed: lookups happen per node class
+            users = set()
+            for k in keys:
+                users |= m.class_users(k)
+            return out & users, "c-exp"
         return out, "c"
 
     def test_class_level(self, rel, cls, qual, kind, a, b, names):
