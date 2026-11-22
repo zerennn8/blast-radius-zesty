@@ -242,6 +242,7 @@ def header_dump(n):
     if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
         saved["__doc"] = None
     try:
+        NoneCmp().visit(n)
         return dump(n)
     finally:
         for f, v in saved.items():
@@ -358,15 +359,23 @@ def lambda_only_sites(a, b):
 class Differ:
     """Collect change events between two module ASTs."""
 
-    def __init__(self):
+    def __init__(self, old_lines, new_lines):
         self.events = []
+        self.ol = old_lines
+        self.nl = new_lines
 
     def run(self, old_mod, new_mod):
         self.body(old_mod.body, new_mod.body, ("module", None), None)
 
+    @staticmethod
+    def text(s, lines):
+        lo = min([s.lineno] + [d.lineno for d in getattr(s, "decorator_list", [])])
+        # identical source text (with column) => identical AST; cheap to compare
+        return (s.col_offset, tuple(lines[lo - 1 : s.end_lineno]))
+
     def body(self, olds, news, ctx, parent):
-        od = [dump(s) for s in olds]
-        nd = [dump(s) for s in news]
+        od = [self.text(s, self.ol) for s in olds]
+        nd = [self.text(s, self.nl) for s in news]
         sm = SequenceMatcher(None, od, nd, autojunk=False)
         for tag, i1, i2, j1, j2 in sm.get_opcodes():
             if tag == "equal":
@@ -408,6 +417,12 @@ class Differ:
         return pairs, lo, ln
 
     def pair_changed(self, a, b, ctx, parent):
+        compound = type(a) is type(b) and any(hasattr(a, f) for f in STMT_FIELDS)
+        if not compound:
+            NoneCmp().visit(a)
+            NoneCmp().visit(b)
+            if dump(a) == dump(b):
+                return
         if type(a) is type(b) and any(hasattr(a, f) for f in STMT_FIELDS):
             if header_dump(a) == header_dump(b):
                 if isinstance(a, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -553,14 +568,12 @@ class Selector:
             nt = ast.parse(new_text)
         except (SyntaxError, ValueError):
             return m.importers(old) | data_readers, f"{old}: syntax error -> importers"
-        NoneCmp().visit(ot)
-        NoneCmp().visit(nt)
         if self.encoding_touched(f):
             return m.importers(old) | data_readers, f"{old}: encoding line"
-        if dump(ot) == dump(nt):
-            return data_readers, f"{old}: AST-equal"
-        d = Differ()
+        d = Differ(old_text.splitlines(), new_text.splitlines())
         d.run(ot, nt)
+        if not d.events:
+            return data_readers, f"{old}: AST-equal"
         out = set(data_readers)
         notes = []
         for e in d.events:
